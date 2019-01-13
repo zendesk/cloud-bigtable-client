@@ -628,7 +628,15 @@ public class CloudBigtableIO {
      */
     @Override
     public boolean advance() throws IOException {
-      FlatRow row = scanner.next();
+      FlatRow row;
+      try {
+        row = scanner.next();
+      } catch (IOException e){
+        READER_LOG.warn("Relaxing handling of IOExceptions on the bigtable reader", e);
+        return advance();
+      }
+
+
       if (row != null && rangeTracker.tryReturnRecordAt(true,
         ByteKey.copyFrom(ByteStringer.extract(row.getRowKey())))) {
         current = FLAT_ROW_ADAPTER.adaptResponse(row);
